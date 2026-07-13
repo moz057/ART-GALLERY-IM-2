@@ -1,0 +1,6 @@
+{
+  "name": "Art Showcase & Community Platform",
+  "description": "A high-fidelity social media prototype for digital artists and creators, featuring advanced filtering, artwork explore galleries, artist profiles, messaging, notifications, interactive artwork details, and rich visual state management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
