@@ -9,6 +9,16 @@ export interface Artist {
   followingCount: number;
   artworksCount: number;
   isFollowing?: boolean;
+  isModerator?: boolean;
+}
+
+export interface Report {
+  id: string;
+  artworkId: string;
+  reporterId: string;
+  reason: string;
+  timestamp: string;
+  status: 'pending' | 'reviewed' | 'resolved';
 }
 
 export interface Comment {
@@ -80,4 +90,5 @@ export interface UserSettings {
   isMatureEnabled: boolean;
   visibility: 'public' | 'private' | 'unlisted';
   email: string;
+  isModerator?: boolean;
 }

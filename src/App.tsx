@@ -14,8 +14,9 @@ import SavedView from './components/SavedView';
 import SettingsView from './components/SettingsView';
 import LoginView from './components/LoginView';
 import RegisterView from './components/RegisterView';
+import ModeratorView from './components/ModeratorView';
 
-import { Artist, Artwork, Comment, Notification, Conversation, UserSettings, Message } from './types';
+import { Artist, Artwork, Comment, Notification, Conversation, UserSettings, Message, Report } from './types';
 import { 
   generateArtists, 
   generateArtworks, 
@@ -42,6 +43,9 @@ export default function App() {
   const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   
+  // Reports
+  const [reports, setReports] = useState<Report[]>([]);
+
   // Active filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('For You');
@@ -55,7 +59,8 @@ export default function App() {
     banner: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80',
     isMatureEnabled: false,
     visibility: 'public',
-    email: 'alex.mercer@vivid.gallery'
+    email: 'alex.mercer@vivid.gallery',
+    isModerator: true
   });
 
   // Initialize Data
@@ -437,6 +442,23 @@ export default function App() {
     handleViewChange('login');
   };
 
+  // Reports Logic
+  const handleReportArtwork = (artworkId: string, reason: string) => {
+    const newReport: Report = {
+      id: `report-${Date.now()}`,
+      artworkId,
+      reporterId: 'user-current',
+      reason,
+      timestamp: 'Just now',
+      status: 'pending'
+    };
+    setReports(prev => [newReport, ...prev]);
+  };
+
+  const handleResolveReport = (reportId: string) => {
+    setReports(prev => prev.map(r => r.id === reportId ? { ...r, status: 'resolved' } : r));
+  };
+
   // Find targeted item metadata for detail cards safely
   const focusedArtwork = artworks.find(art => art.id === selectedArtworkId) || artworks[0];
   const focusedArtist = artists.find(art => art.id === selectedArtistId) || artists[0];
@@ -456,10 +478,12 @@ export default function App() {
         isLoggedIn={isLoggedIn}
         onLogout={handleLogout}
         onLoginClick={() => handleViewChange('login')}
+        isModerator={currentUser.isModerator}
+        pendingReportsCount={reports.filter(r => r.status === 'pending').length}
       />
 
       {/* Main Content Area Container */}
-      <div className="flex-1 lg:pl-64 flex flex-col min-h-screen" id="main-content-scroll-container">
+      <div className="flex-1 lg:pl-20 flex flex-col min-h-screen" id="main-content-scroll-container">
         
         {/* Header bar controls */}
         <Header
@@ -471,6 +495,7 @@ export default function App() {
           isLoggedIn={isLoggedIn}
           onLoginClick={() => handleViewChange('login')}
           unreadNotifications={unreadNotificationsCount}
+          onLogout={handleLogout}
         />
 
         {/* Dynamic Pages viewport */}
@@ -571,6 +596,7 @@ export default function App() {
               onToggleFavorite={handleToggleFavorite}
               onBackClick={() => handleViewChange('home')}
               onAddComment={handleAddComment}
+              onReportArtwork={handleReportArtwork}
             />
           )}
 
@@ -599,6 +625,16 @@ export default function App() {
               currentUser={currentUser}
               onSaveSettings={handleSaveSettings}
               onLogout={handleLogout}
+            />
+          )}
+
+          {currentView === 'moderator' && currentUser.isModerator && (
+            <ModeratorView
+              reports={reports}
+              artworks={artworks}
+              onResolveReport={handleResolveReport}
+              onArtworkClick={handleArtworkClick}
+              onDeleteArtwork={handleDeleteArtwork}
             />
           )}
 

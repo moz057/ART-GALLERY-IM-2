@@ -1,5 +1,5 @@
-import React from 'react';
-import { Search, Bell, MessageSquare, Upload, Sparkles, LogIn, User } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Search, Bell, MessageSquare, Upload, Sparkles, LogIn, User, Settings, LogOut } from 'lucide-react';
 import { UserSettings } from '../types';
 
 interface HeaderProps {
@@ -11,6 +11,7 @@ interface HeaderProps {
   isLoggedIn: boolean;
   onLoginClick: () => void;
   unreadNotifications: number;
+  onLogout: () => void;
 }
 
 export default function Header({
@@ -21,8 +22,21 @@ export default function Header({
   currentUser,
   isLoggedIn,
   onLoginClick,
-  unreadNotifications
+  unreadNotifications,
+  onLogout
 }: HeaderProps) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const getViewTitle = () => {
     switch (currentView) {
@@ -116,21 +130,55 @@ export default function Header({
               )}
             </button>
 
-            {/* Profile Avatar Trigger */}
-            <div 
-              id="header-profile-avatar"
-              onClick={() => onViewChange('profile')}
-              className="flex items-center gap-3 cursor-pointer group"
-            >
-              <img
-                src={currentUser.avatar}
-                alt={currentUser.name}
-                className="w-10 h-10 rounded-full object-cover border-2 border-cyan-500/20 group-hover:border-cyan-500 transition-all shadow-md shadow-cyan-500/5"
-              />
-              <div className="hidden lg:block text-left select-none">
-                <p className="text-[13px] font-semibold text-white group-hover:text-cyan-400 transition-colors">{currentUser.name}</p>
-                <p className="text-[10px] text-gray-500">@{currentUser.username}</p>
+            {/* Profile Avatar Trigger & Dropdown */}
+            <div className="relative" ref={dropdownRef}>
+              <div 
+                id="header-profile-avatar"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="flex items-center gap-3 cursor-pointer group"
+              >
+                <img
+                  src={currentUser.avatar}
+                  alt={currentUser.name}
+                  className="w-10 h-10 rounded-full object-cover border-2 border-cyan-500/20 group-hover:border-cyan-500 transition-all shadow-md shadow-cyan-500/5"
+                />
+                <div className="hidden lg:block text-left select-none">
+                  <p className="text-[13px] font-semibold text-white group-hover:text-cyan-400 transition-colors">{currentUser.name}</p>
+                  <p className="text-[10px] text-gray-500">@{currentUser.username}</p>
+                </div>
               </div>
+
+              {/* Dropdown Menu */}
+              {isDropdownOpen && (
+                <div className="absolute right-0 mt-3 w-56 bg-[#111116] border border-white/10 rounded-2xl shadow-xl shadow-black/50 py-2 z-50 animate-fade-in origin-top-right">
+                  <div className="px-4 py-3 border-b border-white/5 mb-2">
+                    <p className="text-sm font-semibold text-white">{currentUser.name}</p>
+                    <p className="text-xs text-gray-400">@{currentUser.username}</p>
+                  </div>
+                  
+                  <button
+                    onClick={() => { onViewChange('profile'); setIsDropdownOpen(false); }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3"
+                  >
+                    <User className="w-4 h-4" /> Profile
+                  </button>
+                  <button
+                    onClick={() => { onViewChange('settings'); setIsDropdownOpen(false); }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3"
+                  >
+                    <Settings className="w-4 h-4" /> Settings
+                  </button>
+                  
+                  <div className="h-px bg-white/5 my-2"></div>
+                  
+                  <button
+                    onClick={() => { onLogout(); setIsDropdownOpen(false); }}
+                    className="w-full text-left px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors flex items-center gap-3"
+                  >
+                    <LogOut className="w-4 h-4" /> Logout
+                  </button>
+                </div>
+              )}
             </div>
           </>
         ) : (

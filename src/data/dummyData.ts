@@ -238,7 +238,22 @@ export const generateArtists = (): Artist[] => {
     isFollowing: false
   });
 
-  for (let i = 1; i < 50; i++) {
+  // Create a moderator account
+  artists.push({
+    id: 'user-moderator',
+    name: 'Admin Moderator',
+    username: 'moderator_admin',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+    banner: BANNER_IMAGES[1],
+    bio: 'Official VIVID Community Moderator.',
+    followersCount: 10000,
+    followingCount: 0,
+    artworksCount: 0,
+    isFollowing: false,
+    isModerator: true
+  });
+
+  for (let i = 2; i < 50; i++) {
     const firstName = FIRST_NAMES[i % FIRST_NAMES.length];
     const lastName = LAST_NAMES[(i * 3) % LAST_NAMES.length];
     const username = `${firstName.toLowerCase()}${lastName.toLowerCase()}_${i}`;

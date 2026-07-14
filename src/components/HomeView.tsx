@@ -343,7 +343,7 @@ export default function HomeView({
                         transition={{ duration: 0.5, ease: "easeOut" }}
                         className="absolute inset-0 flex items-center justify-center pointer-events-none z-20"
                       >
-                        <Heart className="w-24 h-24 text-pink-500 fill-pink-500 filter drop-shadow-2xl" />
+                        <span className="text-lg w-24 h-24 text-pink-500 fill-pink-500 filter drop-shadow-2xl"  >🔥</span>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -359,7 +359,7 @@ export default function HomeView({
                       className="p-1 rounded-lg hover:bg-white/5 text-gray-400 hover:text-pink-500 transition-colors"
                       title={isLiked ? "Unlike" : "Like"}
                     >
-                      <Heart className={`w-5.5 h-5.5 transition-transform duration-200 active:scale-125 ${isLiked ? 'fill-pink-500 text-pink-500' : ''}`} />
+                      <span className="text-xl">🔥</span>
                     </button>
 
                     {/* Comment Shortcut: Autofocus the inline input box */}

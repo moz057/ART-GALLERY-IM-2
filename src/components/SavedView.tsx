@@ -79,7 +79,7 @@ export default function SavedView({
                   </div>
 
                   <div className="flex items-center gap-4 text-[10px] font-mono text-gray-400 border-t border-white/10 pt-2.5">
-                    <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5 text-pink-500 fill-pink-500/10" /> {art.likesCount}</span>
+                    <span className="flex items-center gap-1"><span className="text-lg w-3.5 h-3.5 text-pink-500 fill-pink-500/10"  >🔥</span> {art.likesCount}</span>
                     <span className="flex items-center gap-1"><Bookmark className="w-3.5 h-3.5 text-yellow-500" /> {art.favoritesCount}</span>
                   </div>
                 </div>

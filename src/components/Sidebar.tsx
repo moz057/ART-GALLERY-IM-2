@@ -11,7 +11,8 @@ import {
   Settings, 
   LogOut, 
   LogIn, 
-  Palette
+  Palette,
+  ShieldAlert
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -22,6 +23,8 @@ interface SidebarProps {
   isLoggedIn: boolean;
   onLogout: () => void;
   onLoginClick: () => void;
+  isModerator?: boolean;
+  pendingReportsCount?: number;
 }
 
 export default function Sidebar({
@@ -31,19 +34,26 @@ export default function Sidebar({
   unreadMessagesCount,
   isLoggedIn,
   onLogout,
-  onLoginClick
+  onLoginClick,
+  isModerator,
+  pendingReportsCount
 }: SidebarProps) {
   
-  const navItems = [
+  const navItems: { id: string; label: string; icon: any; authRequired?: boolean; badge?: number }[] = [
     { id: 'home', label: 'Home Feed', icon: Home },
-    { id: 'explore', label: 'Explore Grid', icon: Compass },
     { id: 'categories', label: 'Categories', icon: Grid },
-    { id: 'upload', label: 'Upload Art', icon: Upload, authRequired: true },
-    { id: 'notifications', label: 'Notifications', icon: Bell, badge: unreadNotificationsCount, authRequired: true },
     { id: 'saved', label: 'Saved Art', icon: Bookmark, authRequired: true },
-    { id: 'profile', label: 'Artist Profile', icon: User, authRequired: true },
-    { id: 'settings', label: 'User Settings', icon: Settings, authRequired: true },
   ];
+
+  if (isModerator) {
+    navItems.push({ 
+      id: 'moderator', 
+      label: 'Moderator Queue', 
+      icon: ShieldAlert, 
+      badge: pendingReportsCount,
+      authRequired: true 
+    });
+  }
 
   const handleNavClick = (id: string, authRequired?: boolean) => {
     if (authRequired && !isLoggedIn) {
@@ -56,26 +66,21 @@ export default function Sidebar({
   return (
     <>
       {/* Desktop Left Sidebar */}
-      <aside id="desktop-sidebar" className="hidden lg:flex flex-col w-64 h-screen fixed left-0 top-0 bg-[#0c0c11]/90 backdrop-blur-xl border-r border-white/5 p-6 z-40 select-none">
+      <aside id="desktop-sidebar" className="hidden lg:flex flex-col w-20 h-screen fixed left-0 top-0 bg-[#0c0c11]/90 backdrop-blur-xl border-r border-white/5 py-6 items-center z-40 select-none">
         {/* Brand Logo */}
         <div 
           id="brand-logo"
           onClick={() => onViewChange('home')} 
-          className="flex items-center gap-3 cursor-pointer group mb-10"
+          className="cursor-pointer group mb-10"
+          title="VIVID Gallery"
         >
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-teal-500 to-emerald-500 flex items-center justify-center glow-accent transition-all duration-300 group-hover:scale-105">
             <Palette className="w-5.5 h-5.5 text-white" />
           </div>
-          <div>
-            <h1 className="font-display font-bold text-lg leading-none bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
-              VIVID
-            </h1>
-            <span className="text-[10px] tracking-widest text-cyan-400 font-mono">GALLERY</span>
-          </div>
         </div>
 
         {/* Navigation Menu */}
-        <nav className="flex-1 space-y-1.5" id="sidebar-nav">
+        <nav className="flex-1 space-y-3 w-full px-3 flex flex-col items-center" id="sidebar-nav">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentView === item.id || (item.id === 'profile' && currentView === 'artist-profile');
@@ -85,51 +90,24 @@ export default function Sidebar({
                 key={item.id}
                 id={`sidebar-item-${item.id}`}
                 onClick={() => handleNavClick(item.id, item.authRequired)}
-                className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl font-sans text-[14px] font-medium transition-all duration-200 group relative ${
+                title={item.label}
+                className={`w-12 h-12 flex items-center justify-center rounded-xl font-sans text-[14px] font-medium transition-all duration-200 group relative ${
                   isActive 
                     ? 'bg-gradient-to-r from-cyan-600/15 to-teal-600/5 text-cyan-400 border border-cyan-500/10 shadow-sm shadow-cyan-500/5' 
                     : 'text-gray-400 hover:text-white hover:bg-white/[0.03] border border-transparent'
                 }`}
               >
-                <Icon className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110 ${isActive ? 'text-cyan-400' : 'text-gray-400 group-hover:text-white'}`} />
-                <span>{item.label}</span>
+                <Icon className={`w-5.5 h-5.5 transition-transform duration-300 group-hover:scale-110 ${isActive ? 'text-cyan-400' : 'text-gray-400 group-hover:text-white'}`} />
                 
                 {item.badge !== undefined && item.badge > 0 && (
-                  <span className="ml-auto bg-cyan-600 text-white text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full ring-2 ring-[#0c0c11]">
+                  <span className="absolute -top-1 -right-1 bg-cyan-600 text-white text-[10px] font-mono font-bold w-5 h-5 flex flex-col justify-center items-center rounded-full ring-2 ring-[#0c0c11]">
                     {item.badge}
                   </span>
-                )}
-
-                {isActive && (
-                  <div className="absolute left-0 top-1/4 bottom-1/4 w-[3px] bg-cyan-500 rounded-r-full" />
                 )}
               </button>
             );
           })}
         </nav>
-
-        {/* Auth Footer */}
-        <div className="pt-4 border-t border-white/5" id="sidebar-auth-footer">
-          {isLoggedIn ? (
-            <button
-              id="sidebar-btn-logout"
-              onClick={onLogout}
-              className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl font-sans text-[14px] font-medium text-red-400/80 hover:text-red-400 hover:bg-red-500/5 border border-transparent hover:border-red-500/10 transition-all duration-200"
-            >
-              <LogOut className="w-5 h-5" />
-              <span>Log Out</span>
-            </button>
-          ) : (
-            <button
-              id="sidebar-btn-login"
-              onClick={onLoginClick}
-              className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl font-sans text-[14px] font-semibold bg-gradient-to-r from-cyan-600 to-teal-600 text-white hover:opacity-90 transition-all duration-200 shadow-md shadow-cyan-600/20"
-            >
-              <LogIn className="w-4.5 h-4.5" />
-              <span>Sign In</span>
-            </button>
-          )}
-        </div>
       </aside>
 
       {/* Mobile Bottom Navigation Bar */}

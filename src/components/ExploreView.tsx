@@ -93,7 +93,7 @@ export default function ExploreView({
                   {/* Core Tally Statistics */}
                   <div className="flex items-center gap-4 text-[11px] font-mono text-gray-400 border-t border-white/10 pt-2.5">
                     <span className="flex items-center gap-1">
-                      <Heart className="w-3.5 h-3.5 text-pink-500 fill-pink-500/10" /> {art.likesCount}
+                      <span className="text-lg w-3.5 h-3.5 text-pink-500 fill-pink-500/10"  >🔥</span> {art.likesCount}
                     </span>
                     <span className="flex items-center gap-1">
                       <MessageSquare className="w-3.5 h-3.5 text-blue-400" /> {art.commentsCount}

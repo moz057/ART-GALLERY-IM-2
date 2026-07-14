@@ -23,7 +23,7 @@ export default function NotificationsView({
 
   const getIconForType = (type: Notification['type']) => {
     switch (type) {
-      case 'like': return <Heart className="w-4 h-4 text-pink-500 fill-pink-500/10" />;
+      case 'like': return <span className="text-lg w-4 h-4 text-pink-500 fill-pink-500/10"  >🔥</span>;
       case 'comment': return <MessageSquare className="w-4 h-4 text-blue-400" />;
       case 'follow': return <UserPlus className="w-4 h-4 text-emerald-400" />;
       case 'save': return <Bookmark className="w-4 h-4 text-yellow-500 fill-yellow-500/10" />;

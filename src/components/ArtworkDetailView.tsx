@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Heart, Bookmark, Share2, Eye, Calendar, MessageSquare, ChevronLeft, Send, Check } from 'lucide-react';
+import { Heart, Bookmark, Share2, Eye, Calendar, MessageSquare, ChevronLeft, Send, Check, AlertTriangle, X } from 'lucide-react';
 import { Artwork, Artist } from '../types';
 
 interface ArtworkDetailViewProps {
@@ -12,6 +12,7 @@ interface ArtworkDetailViewProps {
   onToggleFavorite: (id: string) => void;
   onBackClick: () => void;
   onAddComment: (artworkId: string, commentText: string) => void;
+  onReportArtwork: (id: string, reason: string) => void;
 }
 
 export default function ArtworkDetailView({
@@ -22,11 +23,14 @@ export default function ArtworkDetailView({
   onToggleLike,
   onToggleFavorite,
   onBackClick,
-  onAddComment
+  onAddComment,
+  onReportArtwork
 }: ArtworkDetailViewProps) {
 
   const [commentText, setCommentText] = useState('');
   const [copied, setCopied] = useState(false);
+  const [isReporting, setIsReporting] = useState(false);
+  const [reportReason, setReportReason] = useState('');
 
   const isLiked = artwork.hasLiked;
   const isFaved = artwork.hasFavorited;
@@ -50,6 +54,15 @@ export default function ArtworkDetailView({
     
     onAddComment(artwork.id, commentText);
     setCommentText('');
+  };
+
+  const handleReportSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reportReason.trim()) return;
+    onReportArtwork(artwork.id, reportReason);
+    setReportReason('');
+    setIsReporting(false);
+    alert('Report submitted to moderators successfully.');
   };
 
   return (
@@ -94,7 +107,7 @@ export default function ArtworkDetailView({
                   isLiked ? 'text-pink-500 font-semibold' : 'text-gray-400 hover:text-pink-500'
                 }`}
               >
-                <Heart className={`w-5 h-5 ${isLiked ? 'fill-pink-500 text-pink-500' : ''}`} />
+                <span className="text-xl">🔥</span>
                 <span>{artwork.likesCount} Likes</span>
               </button>
 
@@ -137,6 +150,16 @@ export default function ArtworkDetailView({
                     Link Copied!
                   </span>
                 )}
+              </button>
+
+              {/* Report trigger */}
+              <button
+                id="btn-detail-report"
+                onClick={() => setIsReporting(true)}
+                className="p-2.5 rounded-xl border border-white/5 hover:border-red-500/20 hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-all"
+                title="Report Artwork"
+              >
+                <AlertTriangle className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -303,6 +326,51 @@ export default function ArtworkDetailView({
           )}
         </div>
       </div>
+
+      {/* Reporting Modal */}
+      {isReporting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#121218] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl relative">
+            <button
+              onClick={() => setIsReporting(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-lg font-display font-semibold text-white flex items-center gap-2 mb-4">
+              <AlertTriangle className="w-5 h-5 text-red-500" />
+              Report Artwork
+            </h3>
+            <form onSubmit={handleReportSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-mono text-gray-400 mb-2">Reason for reporting</label>
+                <textarea
+                  required
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  placeholder="Please describe why this artwork violates community guidelines..."
+                  className="w-full bg-[#1a1a24] border border-white/5 rounded-xl p-3 text-sm text-gray-300 placeholder:text-gray-600 focus:outline-none focus:border-red-500/50 resize-none h-24"
+                />
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setIsReporting(false)}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold text-gray-400 hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-sm font-semibold shadow-lg shadow-red-600/20 transition-colors"
+                >
+                  Submit Report
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
