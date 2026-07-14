@@ -597,6 +597,7 @@ export default function App() {
               onBackClick={() => handleViewChange('home')}
               onAddComment={handleAddComment}
               onReportArtwork={handleReportArtwork}
+              onEditArtwork={handleEditArtwork}
             />
           )}
 

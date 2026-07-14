@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
-import { Heart, Bookmark, Share2, Eye, Calendar, MessageSquare, ChevronLeft, Send, Check, AlertTriangle, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Bookmark, Share2, Eye, Calendar, MessageSquare, ChevronLeft, Send, Check, AlertTriangle, X, MoreHorizontal } from 'lucide-react';
 import { Artwork, Artist } from '../types';
+import { CATEGORIES } from '../data/dummyData';
 
 interface ArtworkDetailViewProps {
   artwork: Artwork;
@@ -13,6 +14,7 @@ interface ArtworkDetailViewProps {
   onBackClick: () => void;
   onAddComment: (artworkId: string, commentText: string) => void;
   onReportArtwork: (id: string, reason: string) => void;
+  onEditArtwork?: (id: string, updatedFields: Partial<Artwork>) => void;
 }
 
 export default function ArtworkDetailView({
@@ -24,7 +26,8 @@ export default function ArtworkDetailView({
   onToggleFavorite,
   onBackClick,
   onAddComment,
-  onReportArtwork
+  onReportArtwork,
+  onEditArtwork
 }: ArtworkDetailViewProps) {
 
   const [commentText, setCommentText] = useState('');
@@ -32,8 +35,17 @@ export default function ArtworkDetailView({
   const [isReporting, setIsReporting] = useState(false);
   const [reportReason, setReportReason] = useState('');
 
+  // Editing state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [editTags, setEditTags] = useState('');
+  const [activeMenu, setActiveMenu] = useState(false);
+
   const isLiked = artwork.hasLiked;
   const isFaved = artwork.hasFavorited;
+  const isMe = artwork.artistId === 'user-current';
 
   // Filter related artworks: same category, excluding itself, up to 4 items
   const relatedArtworks = allArtworks
@@ -63,6 +75,25 @@ export default function ArtworkDetailView({
     setReportReason('');
     setIsReporting(false);
     alert('Report submitted to moderators successfully.');
+  };
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!onEditArtwork) return;
+    
+    const splitTags = editTags
+      .split(',')
+      .map(tag => tag.trim())
+      .filter(Boolean);
+
+    onEditArtwork(artwork.id, {
+      title: editTitle,
+      description: editDescription,
+      category: editCategory,
+      tags: splitTags
+    });
+
+    setIsEditing(false);
   };
 
   return (
@@ -152,15 +183,54 @@ export default function ArtworkDetailView({
                 )}
               </button>
 
-              {/* Report trigger */}
-              <button
-                id="btn-detail-report"
-                onClick={() => setIsReporting(true)}
-                className="p-2.5 rounded-xl border border-white/5 hover:border-red-500/20 hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-all"
-                title="Report Artwork"
-              >
-                <AlertTriangle className="w-5 h-5" />
-              </button>
+              <div className="relative">
+                <button
+                  id="btn-detail-more"
+                  onClick={(e) => { e.stopPropagation(); setActiveMenu(!activeMenu); }}
+                  className="p-2.5 rounded-xl border border-white/5 hover:border-white/10 hover:bg-white/5 text-gray-400 hover:text-white transition-all"
+                  title="More Options"
+                >
+                  <MoreHorizontal className="w-5 h-5" />
+                </button>
+                <AnimatePresence>
+                  {activeMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                      className="absolute right-0 top-full mt-2 w-36 bg-[#0f0f15] border border-white/10 rounded-xl overflow-hidden shadow-2xl z-30 py-1"
+                    >
+                      {isMe ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsEditing(true);
+                            setEditTitle(artwork.title);
+                            setEditDescription(artwork.description || '');
+                            setEditCategory(artwork.category);
+                            setEditTags(artwork.tags.join(', '));
+                            setActiveMenu(false);
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors border-b border-white/[0.03]"
+                        >
+                          Edit Post
+                        </button>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsReporting(true);
+                            setActiveMenu(false);
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+                        >
+                          <AlertTriangle className="w-4 h-4" /> Report
+                        </button>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
         </div>
@@ -327,50 +397,155 @@ export default function ArtworkDetailView({
         </div>
       </div>
 
-      {/* Reporting Modal */}
-      {isReporting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#121218] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl relative">
-            <button
+      {/* Reporting / Edit Tab Slide-Out Overlay */}
+      <AnimatePresence>
+        {isReporting && (
+          <>
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               onClick={() => setIsReporting(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+            />
+            {/* Sliding Panel */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-[#0f0f14] border-l border-white/10 shadow-2xl flex flex-col"
             >
-              <X className="w-5 h-5" />
-            </button>
-            <h3 className="text-lg font-display font-semibold text-white flex items-center gap-2 mb-4">
-              <AlertTriangle className="w-5 h-5 text-red-500" />
-              Report Artwork
-            </h3>
-            <form onSubmit={handleReportSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-mono text-gray-400 mb-2">Reason for reporting</label>
-                <textarea
-                  required
-                  value={reportReason}
-                  onChange={(e) => setReportReason(e.target.value)}
-                  placeholder="Please describe why this artwork violates community guidelines..."
-                  className="w-full bg-[#1a1a24] border border-white/5 rounded-xl p-3 text-sm text-gray-300 placeholder:text-gray-600 focus:outline-none focus:border-red-500/50 resize-none h-24"
-                />
-              </div>
-              <div className="flex justify-end gap-3 mt-6">
+              <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                <h3 className="text-xl font-display font-semibold text-white flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-red-500" />
+                  Report Artwork
+                </h3>
                 <button
-                  type="button"
                   onClick={() => setIsReporting(false)}
-                  className="px-4 py-2 rounded-xl text-sm font-semibold text-gray-400 hover:text-white transition-colors"
+                  className="text-gray-500 hover:text-white transition-colors p-2"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-6 flex-1 overflow-y-auto">
+                <form onSubmit={handleReportSubmit} className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">Report Details</label>
+                    <p className="text-xs text-gray-400 mb-4 leading-relaxed">
+                      Please provide details about why this artwork violates community guidelines. 
+                      Our moderators will review your report shortly.
+                    </p>
+                    <textarea
+                      required
+                      value={reportReason}
+                      onChange={(e) => setReportReason(e.target.value)}
+                      placeholder="e.g. This artwork contains inappropriate content..."
+                      className="w-full bg-white/[0.03] border border-white/5 rounded-xl p-4 text-sm text-gray-300 placeholder:text-gray-600 focus:outline-none focus:border-red-500/50 resize-none h-40"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-3 pt-6 border-t border-white/5">
+                    <button
+                      type="button"
+                      onClick={() => setIsReporting(false)}
+                      className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl text-sm font-semibold shadow-lg shadow-red-600/20 transition-all flex items-center gap-2"
+                    >
+                      <AlertTriangle className="w-4 h-4" />
+                      Submit Report
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+      {/* Edit Artwork Modal */}
+      <AnimatePresence>
+        {isEditing && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="bg-[#0f0f14] border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center pb-2 border-b border-white/5">
+                <h3 className="text-sm font-display font-bold text-white">Edit Artwork Details</h3>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="text-xs text-gray-500 hover:text-white transition-colors"
                 >
                   Cancel
                 </button>
+              </div>
+
+              <form onSubmit={handleSaveEdit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-mono uppercase tracking-wider text-gray-400 font-semibold">Title</label>
+                  <input
+                    type="text"
+                    required
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-mono uppercase tracking-wider text-gray-400 font-semibold">Category</label>
+                  <select
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value)}
+                    className="w-full bg-[#121218] border border-white/5 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-500/50"
+                  >
+                    {CATEGORIES.filter(c => c !== 'For You' && c !== 'All').map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-mono uppercase tracking-wider text-gray-400 font-semibold">Description</label>
+                  <textarea
+                    rows={3}
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 resize-none"
+                    placeholder="Describe your artwork..."
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-mono uppercase tracking-wider text-gray-400 font-semibold">Tags (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={editTags}
+                    onChange={(e) => setEditTags(e.target.value)}
+                    className="w-full bg-white/[0.03] border border-white/5 rounded-xl px-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50"
+                    placeholder="e.g. futuristic, cyberpunk, abstract"
+                  />
+                </div>
+
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-sm font-semibold shadow-lg shadow-red-600/20 transition-colors"
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-teal-600 text-white text-xs font-bold shadow-md shadow-cyan-600/10 hover:opacity-95 transition-all mt-2"
                 >
-                  Submit Report
+                  Save Changes
                 </button>
-              </div>
-            </form>
+              </form>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 }

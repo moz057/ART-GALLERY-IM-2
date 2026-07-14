@@ -112,7 +112,7 @@ export default function Sidebar({
 
       {/* Mobile Bottom Navigation Bar */}
       <nav id="mobile-bottom-nav" className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#0c0c11]/90 backdrop-blur-xl border-t border-white/5 flex items-center justify-around px-4 z-40 select-none pb-safe">
-        {navItems.filter(item => ['home', 'explore', 'upload', 'notifications'].includes(item.id)).map((item) => {
+        {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentView === item.id;
           
